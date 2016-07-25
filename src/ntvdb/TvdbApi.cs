@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using Nito.AsyncEx;
 
 namespace NTvdb
@@ -14,6 +13,7 @@ namespace NTvdb
 	public interface ITvdbApi
 	{
 		Task<TvdbSeriesSearchResult> SearchSeriesAsync(string name, CancellationToken cancellationToken);
+		Task<TvdbSeries> GetSeries(int seriesId, CancellationToken cancellationToken);
 	}
 
 	public static class HttpClientMethods
@@ -38,18 +38,6 @@ namespace NTvdb
 		}
 	}
 
-	public class SearchResultSchema
-	{
-		public string[] aliases { get; set; }
-		public string banner { get; set; }
-		public string firstAired { get; set; }
-		public int id { get; set; }
-		public string network { get; set; }
-		public string overview { get; set; }
-		public string seriesName { get; set; }
-		public string status { get; set; }
-	}
-
 	public class TvdbApi : ITvdbApi
 	{
 		private readonly AsyncLazy<HttpClient> _httpClient;
@@ -72,6 +60,17 @@ namespace NTvdb
 
 			var result = await response.Content.ReadAsJsonAsync<SearchResultSchema>();
 			return new TvdbSeriesSearchResult(result);
+		}
+
+		public async Task<TvdbSeries> GetSeries(int seriesId, CancellationToken cancellationToken)
+		{
+			var request = new HttpRequestMessage(HttpMethod.Get, $"/series/{seriesId}");
+
+			var response = await SendAsync(request, cancellationToken);
+			response.EnsureSuccessStatusCode();
+
+			var result = await response.Content.ReadAsJsonAsync<SeriesDetailsSchema>();
+			return new TvdbSeries(result);
 		}
 
 		private async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -105,7 +104,7 @@ namespace NTvdb
 			response.EnsureSuccessStatusCode();
 
 			var schema = new { token = "" };
-			var jwt = JsonConvert.DeserializeAnonymousType(await response.Content.ReadAsStringAsync(), schema);
+			var jwt = await response.Content.ReadAsAnonymousJsonAsync(schema);
 
 			return jwt.token;
 		}
