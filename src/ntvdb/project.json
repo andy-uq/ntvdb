@@ -3,12 +3,23 @@
   "buildOptions": {
     "debugType": "portable"
   },
-  "dependencies": {},
+  "dependencies": {
+    "System.Runtime.Serialization.Primitives": "4.1.1",
+    "Nito.AsyncEx.Core": "1.0.0-rc2-001",
+    "Newtonsoft.Json": "9.0.1"
+  },
   "frameworks": {
-    "netstandard1.6": {
+    "netcoreapp1.0": {
       "dependencies": {
-        "NETStandard.Library": "1.6.0"
-      }
+        "Microsoft.NETCore.App": {
+          "type": "platform",
+          "version": "1.0.0"
+        }
+      },
+      "imports": [
+        "dotnet5.4",
+        "portable-net451+win8"
+      ]
     }
   }
 }
